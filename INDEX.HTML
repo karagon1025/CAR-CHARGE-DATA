@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>차량비용 데이터</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', 'Apple SD Gothic Neo', Arial, sans-serif;
+      background: linear-gradient(120deg, #F0F4F9 0%, #DDE9EF 100%);
+      margin: 0; min-height: 100vh; color: #222;
+    }
+    .container {
+      max-width: 500px; margin: 0 auto; background: #fff;
+      border-radius: 18px; box-shadow: 0 2px 28px #d0e5ff44;
+      padding: 20px 6px 18px; margin-top: 18px; margin-bottom: 24px;
+    }
+    .flex-title {
+      display: flex; align-items: center; gap:7px; flex-wrap:nowrap;
+      margin-bottom: 12px; margin-left:12px; justify-content:center;
+      /* 한줄에 정렬! */
+    }
+    .car-name-dropdown {
+      position: relative; display: inline-block;
+      margin-right: 4px;
+    }
+    #carNameInput {
+      background: #f7fbfe; border: 1.2px solid #bdd7f6; border-radius: 7px;
+      font-size: 1.08em; font-weight:700; min-width:60px; max-width:80px;
+      color: #1e388b; padding: 6px 24px 5px 11px;
+      outline: none; transition: border .18s; letter-spacing: .5px;
+      cursor:pointer;
+    }
+    #carNameInput:focus { border: 1.3px solid #426fea;}
+    .dropdown-arrow {
+      position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+      cursor: pointer; color: #426fea; font-size: 1.1em; font-weight: bold;
+      transition: transform 0.2s ease;
+    }
+    .dropdown-arrow.open { transform: translateY(-50%) rotate(180deg); }
+    .dropdown-list {
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: #fff; border: 1px solid #bdd7f6; border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; max-height: 180px; overflow-y: auto;
+      display: none;
+    }
+    .dropdown-list.show { display: block; }
+    .dropdown-item {
+      padding: 8px 9px; cursor: pointer;
+      border-bottom: 1px solid #f0f2f8;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: background-color 0.2s ease;
+    }
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover { background-color: #f0f6ff; }
+    .dropdown-item-text { flex: 1; color: #1e388b; font-weight: 600;}
+    .delete-nick-btn {
+      background: none; border: none; color: #e74c3c;
+      font-size: 1.1em; cursor: pointer; padding: 1px 5px;
+      border-radius: 4px; transition: all 0.2s ease;
+    }
+    .delete-nick-btn:hover {
+      background-color: #e74c3c; color: white; transform: scale(1.1);
+    }
+    .date-selects {
+      display: flex; gap: 2.5px; align-items: center; margin-right:4px;
+      margin-left: 1px;
+    }
+    .date-selects select {
+      background: #eef2f8; border-radius: 7px;
+      border: 1px solid #bbd5f2; font-size: .97em; color:#33739a;
+      padding: 2.5px 6.5px 2.5px 7px; outline:none; font-weight:500;
+      min-width:41px;
+    }
+    .date-label {font-size:.96em;color:#5982A7;font-weight:500;margin-left:1px;}
+    .fuel-type-box {
+      display: inline-block; margin-left:4px; margin-bottom:0px;
+      vertical-align: middle;
+    }
+    #energyTypeSelect {
+      background: #f5f7fe; border-radius: 6px; border: 1.05px solid #c9daea;
+      font-size: .90em; color: #408899; font-weight:600;
+      padding: 2.5px 9px 2.5px 7px; outline: none;
+      min-width:65px;
+    }
+    #energyTypeSelect:focus { border: 1.05px solid #33739a; }
+    form#form { margin: 7px 0 7px 0; width:100%; }
+    .input-label-row, .input-field-row {
+      display: flex; justify-content: space-between; align-items:center;
+      gap: 8px; width:100%;
+    }
+    .input-label-row label {
+      flex: 1 1 0; text-align: center;
+      font-size: 0.95em; font-weight: 600; color:#3791c9; letter-spacing:-0.2px;
+      margin-bottom:3px; margin-top:2px;
+    }
+    .input-field-row input[type="number"] {
+      flex: 1 1 0;
+      background: #f4faff; border-radius: 6px; border: 1.2px solid #bdc7d1;
+      padding: 8.5px 4px; font-size: 1.08em; color: #205080; 
+      text-align:center; transition:border 0.17s; width:100%;
+    }
+    .input-field-row input[type="number"]:focus { border:1.5px solid #3bb1f6; }
+    form#form button {
+      background: linear-gradient(105deg,#60a5fa 70%,#36cfcf 100%); border: none; color: #fff;
+      border-radius: 8px; font-size: 1.01em; font-weight: 700;
+      margin: 11px 0 10px 0; padding: 10px 0; width:100%;
+      box-shadow: 0 2px 6px #e3ecf755; cursor: pointer; transition: background .18s;
+    }
+    form#form button:hover, form#form button:focus {
+      background: linear-gradient(95deg,#36cfcf 30%,#60a5fa 100%);
+      color: #fff;
+    }
+    .summary-label-row, .summary-val-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-weight: 700; font-size: .94em; background: #eef6fd;
+      border-radius: 7px; padding: 7px 3px 5px 3px; letter-spacing: -.15px; margin-bottom:2.5px;
+      color: #16648a; text-align:center;
+    }
+    .summary-label-row > span, .summary-val-row > span {
+      flex: 1; display: flex; flex-direction:column; align-items:center; justify-content:center;
+    }
+    .summary-val-row {
+      background: linear-gradient(90deg, #e0f6f5 5%, #eaf5fc 90%);
+      font-weight: 600; color: #155874; margin:0 0 7px 0;padding:8px 3px 8px 3px;
+      font-size: .96em; text-align:center;
+    }
+    .data-table {
+      width: 100%; border-collapse: collapse; margin-top: 0px;
+      background:#fff; border-radius: 10px; font-size: .97em;
+      overflow-x: auto; box-shadow: 0 1.2px 6px #ddecec55;
+    }
+    .data-table thead { display:none;}
+    .data-table tr { border-bottom: 1px solid #e4e5f7; }
+    .data-table td.data-th {
+      font-weight: 700; background: #eff4fa; color: #2563eb;
+      font-size: .97em; padding:8px 2px 7px 2px;
+      border-top: 1.5px solid #cdddf7bb; text-align:center;
+    }
+    .data-table td {
+      color: #3b426b; background: #f9fcfb;
+      padding: 8px 1.5px 4px 1.5px; font-size:1em; text-align:center;
+      word-break:keep-all; vertical-align: middle;
+      border-bottom: 1px solid #e4e5f7;
+    }
+    .cell-wrap {
+      display: flex; flex-direction: column; align-items: center; line-height: 1.1;
+    }
+    .cell-main { font-size:1.08em; font-weight:500;}
+    .cell-sub { font-size:.75em; color:#85a6cc; margin-top:0.3px;}
+    .empty-indicator {
+      color:#b0b0be; text-align:center; padding:18px 0;font-size:.99em;
+      font-weight:500; background:none;
+    }
+    .action-btn {font-size:.9em;padding:2px 8px;margin:2px;color:#378; background:#e8f2ff; border:1px solid #b4d7fc; border-radius:7px; cursor:pointer;}
+    .action-btn:hover {background:#b4d7fc;}
+    .edit-row {background:#fffcf2 !important;}
+    .edit-control {padding:3px 0 0 0;}
+    @media (max-width: 700px) {
+      .container { padding: 5px 0.5vw 2.5px; }
+      .flex-title { gap:3.5px; margin-left:1px;}
+      .car-name-dropdown { margin-right: 2px; }
+      #carNameInput { font-size: .97em; min-width:48px; max-width:78px; padding: 4px 16px 4px 7px;}
+      .dropdown-arrow { right: 4px; font-size: 0.95em; }
+      .date-selects select { font-size:.92em; min-width:33px; padding:2px 4px;}
+      .fuel-type-box {margin-left:2px;}
+      #energyTypeSelect { font-size:.87em;padding:2.5px 3px;}
+      .summary-label-row, .summary-val-row { font-size:.91em; }
+      .data-table { font-size: .93em;}
+      .data-table th, .data-table td { padding: 5px 0.5vw;}
+      .input-label-row label { font-size: .95em;}
+    }
+    @media (max-width: 430px) {
+      .container { padding: 1vw 0 2vw 0;}
+      .input-label-row label { font-size: 0.94em;}
+      .input-field-row input[type="number"] { font-size:.97em;}
+      .summary-label-row, .summary-val-row { font-size:.88em;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="flex-title">
+      <!-- 커스텀 드롭다운 닉네임 입력 (8자, 한줄) -->
+      <div class="car-name-dropdown">
+        <input id="carNameInput" maxlength="8" value="EV충전비" title="차량 닉네임" readonly/>
+        <span class="dropdown-arrow" id="dropdownArrow">▼</span>
+        <div class="dropdown-list" id="dropdownList"></div>
+      </div>
+      <div class="date-selects">
+        <select id="yearSelect"></select>
+        <span class="date-label">년</span>
+        <select id="monthSelect"></select>
+        <span class="date-label">월</span>
+      </div>
+      <span class="fuel-type-box">
+        <select id="energyTypeSelect" title="유종 선택">
+          <option value="ev">전기</option>
+          <option value="gasoline">휘발유</option>
+          <option value="diesel">디젤</option>
+          <option value="lpg">가스</option>
+        </select>
+      </span>
+    </div>
+    <form id="form" autocomplete="off">
+      <div class="input-label-row">
+        <label for="odometer">누적거리 (km)</label>
+        <label for="kwh">충전량 (kWh/L)</label>
+        <label for="cost">충전비 (원)</label>
+      </div>
+      <div class="input-field-row">
+        <input type="number" id="odometer" min="0" step="0.1" required>
+        <input type="number" id="kwh" min="0" step="0.01" required>
+        <input type="number" id="cost" min="0" step="1" required>
+      </div>
+      <button type="submit">추가</button>
+    </form>
+    <div class="summary-label-row" id="summaryLabelRow"></div>
+    <div id="summaryRow" class="summary-val-row"></div>
+    <table class="data-table"><tbody id="dataRows"></tbody></table>
+  </div>
+  <script>
+    // 커스텀 드롭다운 관리
+    const carNameInput = document.getElementById('carNameInput');
+    const dropdownArrow = document.getElementById('dropdownArrow');
+    const dropdownList = document.getElementById('dropdownList');
+    let carNameHistory = JSON.parse(localStorage.getItem("carNameHistory")||'["EV충전비"]');
+    let dropdownOpen = false;
+
+    function updateDropdownList() {
+      dropdownList.innerHTML = carNameHistory.map((name, idx) => 
+        `<div class="dropdown-item" data-value="${name}">
+          <span class="dropdown-item-text">${name}</span>
+          <button class="delete-nick-btn" data-idx="${idx}" title="삭제">×</button>
+        </div>`
+      ).join('');
+      
+      dropdownList.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+          if (e.target.classList.contains('delete-nick-btn')) {
+            e.stopPropagation();
+            deleteNickname(parseInt(e.target.dataset.idx));
+          } else {
+            selectNickname(this.dataset.value);
+          }
+        });
+      });
+    }
+
+    function toggleDropdown() {
+      dropdownOpen = !dropdownOpen;
+      dropdownList.classList.toggle('show', dropdownOpen);
+      dropdownArrow.classList.toggle('open', dropdownOpen);
+      if (dropdownOpen) {
+        updateDropdownList();
+      }
+    }
+
+    function selectNickname(name) {
+      carNameInput.value = name;
+      dropdownOpen = false;
+      dropdownList.classList.remove('show');
+      dropdownArrow.classList.remove('open');
+      if (carNameHistory.indexOf(name) === -1) {
+        carNameHistory.unshift(name);
+        if (carNameHistory.length > 15) carNameHistory.pop();
+        localStorage.setItem("carNameHistory", JSON.stringify(carNameHistory));
+      }
+      document.title = `${carNameInput.value} 데이터`;
+      localStorage.setItem("carTitle", carNameInput.value);
+      updateTable();
+    }
+
+    function deleteNickname(idx) {
+      if (carNameHistory.length <= 1) {
+        alert('최소 하나의 닉네임은 유지해야 합니다.');
+        return;
+      }
+      carNameHistory.splice(idx, 1);
+      localStorage.setItem("carNameHistory", JSON.stringify(carNameHistory));
+      updateDropdownList();
+    }
+
+    dropdownArrow.addEventListener('click', toggleDropdown);
+    carNameInput.addEventListener('click', toggleDropdown);
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.car-name-dropdown')) {
+        dropdownOpen = false;
+        dropdownList.classList.remove('show');
+        dropdownArrow.classList.remove('open');
+      }
+    });
+
+    const energyTypeSelect = document.getElementById('energyTypeSelect');
+    const yearSelect = document.getElementById('yearSelect');
+    const monthSelect = document.getElementById('monthSelect');
+    const summaryLabelRow = document.getElementById('summaryLabelRow');
+    const summaryRow = document.getElementById('summaryRow');
+    const dataRows = document.getElementById('dataRows');
+    const formEl = document.getElementById('form');
+
+    function ymKey() {
+      return `${yearSelect.value}-${pad2(monthSelect.value)}-${energyTypeSelect.value}-${carNameInput.value}`;
+    }
+    function loadData() {
+      let all = JSON.parse(localStorage.getItem("detailList")||'{}');
+      let key = ymKey();
+      return all[key]||[];
+    }
+    function saveData(arr) {
+      let all = JSON.parse(localStorage.getItem("detailList")||'{}');
+      all[ymKey()] = arr;
+      localStorage.setItem("detailList", JSON.stringify(all));
+    }
+    const UNITSETS = {
+      ev:      { dist: "km", amt: "kWh", cost: "원", unitprice: "원", eff: "km/kWh", amtLabel: "충전량", costLabel: "충전비", unitpriceLabel: "평균 단가", effLabel: "평균전비" },
+      gasoline:{ dist: "km", amt: "L",   cost: "원", unitprice: "원", eff: "km/L",    amtLabel: "주유량",   costLabel: "주유비", unitpriceLabel: "평균 단가", effLabel: "평균연비" },
+      diesel:  { dist: "km", amt: "L",   cost: "원", unitprice: "원", eff: "km/L",    amtLabel: "주유량",   costLabel: "주유비", unitpriceLabel: "평균 단가", effLabel: "평균연비" },
+      lpg:     { dist: "km", amt: "L",   cost: "원", unitprice: "원", eff: "km/L",    amtLabel: "충전량",   costLabel: "충전비", unitpriceLabel: "평균 단가", effLabel: "평균연비" }
+    };
+    function pad2(n) { return n < 10 ? '0'+n : n; }
+    function getDayOfWeek(y,m,d) {
+      const days = ['일','월','화','수','목','금','토'];
+      return days[new Date(`${y}-${pad2(m)}-${pad2(d)}`).getDay()];
+    }
+    function getShortDateTime(y, m, d, hour, min) {
+      return `${pad2(m)}-${pad2(d)}(${getDayOfWeek(y, m, d)}) ${pad2(hour)}:${pad2(min)}`;
+    }
+    function renderLabels(type='ev') {
+      const u = UNITSETS[type];
+      summaryLabelRow.innerHTML = `
+        <span style="flex:.8;text-align:center;">횟수</span>
+        <span style="flex:1;text-align:center;">주행거리</span>
+        <span style="flex:1;text-align:center;">${u.amtLabel}</span>
+        <span style="flex:1;text-align:center;">${u.costLabel}</span>
+        <span style="flex:1.02;text-align:center;">${u.unitpriceLabel}</span>
+        <span style="flex:1;text-align:center;">${u.effLabel}</span>
+      `;
+    }
+    function renderHeaderRow(type='ev') {
+      const u = UNITSETS[type];
+      return `<tr>
+        <td class="data-th" style="flex:.8;">연번</td>
+        <td class="data-th" style="flex:1.27;">일시</td>
+        <td class="data-th" style="flex:1.09;">주행거리</td>
+        <td class="data-th" style="flex:1;">${u.amtLabel}</td>
+        <td class="data-th" style="flex:1;">${u.costLabel}</td>
+        <td class="data-th" style="flex:1.01;">${u.unitpriceLabel}</td>
+        <td class="data-th" style="flex:1;">${u.effLabel}</td>
+        <td class="data-th" style="flex:0.65;">관리</td>
+      </tr>`;
+    }
+    function updateSummaryRow(filtered, type='ev') {
+      const u = UNITSETS[type];
+      let sumDistance = 0, sumAmt = 0, sumCost = 0;
+      filtered.forEach(data => {
+        sumDistance += data.distance; sumAmt += data.kwh; sumCost += data.cost;
+      });
+      const count = filtered.length;
+      const avgUnitPrice = sumAmt > 0 ? (sumCost / sumAmt).toFixed(1) : '—';
+      const avgEff = sumAmt > 0 ? (sumDistance / sumAmt).toFixed(2) : '—';
+      summaryRow.innerHTML = `
+        <span style="flex:.8;text-align:center;"><div class="cell-wrap"><div class="cell-main">${count ? count : ''}</div><div class="cell-sub"></div></div></span>
+        <span style="flex:1;text-align:center;"><div class="cell-wrap"><div class="cell-main">${count ? sumDistance.toFixed(1) : ''}</div><div class="cell-sub">${count ? u.dist : ""}</div></div></span>
+        <span style="flex:1;text-align:center;"><div class="cell-wrap"><div class="cell-main">${count ? sumAmt.toFixed(2) : ''}</div><div class="cell-sub">${count ? u.amt : ""}</div></div></span>
+        <span style="flex:1;text-align:center;"><div class="cell-wrap"><div class="cell-main">${count ? sumCost.toLocaleString() : ''}</div><div class="cell-sub">${count ? u.cost : ""}</div></div></span>
+        <span style="flex:1.02;text-align:center;"><div class="cell-wrap"><div class="cell-main">${count ? avgUnitPrice : ''}</div><div class="cell-sub">${count ? u.unitprice : ""}</div></div></span>
+        <span style="flex:1;text-align:center;"><div class="cell-wrap"><div class="cell-main">${count ? avgEff : ''}</div><div class="cell-sub">${count ? u.eff : ""}</div></div></span>
+      `;
+    }
+    function renderDataRow(idx, data, type, isEdit=false) {
+      const u = UNITSETS[type];
+      const dt = data.datetime;
+      const dstr = dt.slice(8,10);
+      const hour = parseInt(dt.slice(11,13));
+      const min = parseInt(dt.slice(14,16));
+      const displayDate = getShortDateTime(data.y, data.m, dstr, hour, min);
+      const unitPrice = data.kwh > 0 ? (data.cost / data.kwh).toFixed(1) : '—';
+      const efficiency = data.kwh > 0 ? (data.distance / data.kwh).toFixed(2) : '—';
+      if(isEdit) {
+        return `<tr class="edit-row">
+          <td colspan="8">
+            <form id="editForm${idx}" class="edit-control">
+              <input type="number" step="0.1" min="0" id="editOdom${idx}" value="${data.odometer}" style="width:90px;">
+              <input type="number" step="0.01" min="0" id="editKwh${idx}" value="${data.kwh}" style="width:80px;">
+              <input type="number" step="1" min="0" id="editCost${idx}" value="${data.cost}" style="width:70px;">
+              <button type="submit" class="action-btn">저장</button>
+              <button type="button" class="action-btn" onclick="cancelEdit(${idx})">취소</button>
+            </form>
+          </td>
+        </tr>`;
+      }
+      return `<tr>
+        <td><div class="cell-wrap"><div class="cell-main">${idx+1}</div><div class="cell-sub"></div></div></td>
+        <td><div class="cell-wrap"><div class="cell-main">${displayDate}</div><div class="cell-sub"></div></div></td>
+        <td><div class="cell-wrap"><div class="cell-main">${data.distance}</div><div class="cell-sub">${u.dist}</div></div></td>
+        <td><div class="cell-wrap"><div class="cell-main">${data.kwh}</div><div class="cell-sub">${u.amt}</div></div></td>
+        <td><div class="cell-wrap"><div class="cell-main">${data.cost}</div><div class="cell-sub">${u.cost}</div></div></td>
+        <td><div class="cell-wrap"><div class="cell-main">${unitPrice}</div><div class="cell-sub">${u.unitprice}</div></div></td>
+        <td><div class="cell-wrap"><div class="cell-main">${efficiency}</div><div class="cell-sub">${u.eff}</div></div></td>
+        <td>
+          <button class="action-btn" type="button" onclick="editRow(${idx})">수정</button>
+          <button class="action-btn" type="button" onclick="deleteRow(${idx})">삭제</button>
+        </td>
+      </tr>`;
+    }
+    function updateTable() {
+      const type = energyTypeSelect.value;
+      const y = parseInt(yearSelect.value), m = parseInt(monthSelect.value);
+      let list = loadData();
+      dataRows.innerHTML = '';
+      dataRows.innerHTML += renderHeaderRow(type);
+      if (list.length === 0) {
+        dataRows.innerHTML += `<tr><td colspan="8" class="empty-indicator">입력된 데이터가 없습니다.</td></tr>`;
+      } else {
+        list.forEach((data, idx) => {
+          if(editMode === idx) {
+            dataRows.innerHTML += renderDataRow(idx, data, type, true);
+          } else {
+            dataRows.innerHTML += renderDataRow(idx, data, type, false);
+          }
+        });
+      }
+      updateSummaryRow(list, type);
+      list.forEach((data, idx) => {
+        let ef = document.getElementById(`editForm${idx}`);
+        if(ef) {
+          ef.onsubmit = function(e){
+            e.preventDefault();
+            let arr = loadData();
+            let newOdom = parseFloat(document.getElementById(`editOdom${idx}`).value);
+            let newKwh = parseFloat(document.getElementById(`editKwh${idx}`).value);
+            let newCost = parseFloat(document.getElementById(`editCost${idx}`).value);
+            let prevOdom = idx>0 ? arr[idx-1].odometer : null;
+            let nextOdom = idx<arr.length-1 ? arr[idx+1].odometer : null;
+            let distance = prevOdom!=null ? (newOdom-prevOdom) : newOdom;
+            if(distance<0){alert("누적거리는 앞 기록보다 커야 합니다.");return;}
+            arr[idx].odometer = newOdom;
+            arr[idx].kwh = newKwh;
+            arr[idx].cost = newCost;
+            arr[idx].distance = distance;
+            if(nextOdom!=null){
+              let nextDistance = nextOdom-newOdom;
+              if(nextDistance<0){alert("수정 후 다음 기록의 누적거리가 더 작을 수 없습니다.");return;}
+              arr[idx+1].distance = nextDistance;
+            }
+            saveData(arr);
+            editMode=-1;
+            updateTable();
+          };
+        }
+      });
+    }
+    let editMode = -1;
+    window.editRow = function(idx) {
+      editMode = idx;
+      updateTable();
+    };
+    window.cancelEdit = function(idx) {
+      editMode = -1;
+      updateTable();
+    };
+    window.deleteRow = function(idx) {
+      let arr = loadData();
+      arr.splice(idx, 1);
+      for(let i=1; i<arr.length; i++){
+        arr[i].distance = arr[i].odometer - arr[i-1].odometer;
+        if(arr[i].distance < 0) arr[i].distance = 0;
+      }
+      saveData(arr);
+      editMode=-1;
+      updateTable();
+    };
+    function setupYearMonth() {
+      const now = new Date();
+      let ysel = "";
+      for (let y = now.getFullYear()-4; y <= now.getFullYear()+1; y++) {
+        ysel += `<option value="${y}"${y===now.getFullYear() ? ' selected':''}>${y}</option>`;
+      }
+      yearSelect.innerHTML = ysel;
+      let msel = "";
+      for (let m = 1; m <= 12; m++) {
+        msel += `<option value="${m}"${m===now.getMonth()+1 ? ' selected':''}>${pad2(m)}</option>`;
+      }
+      monthSelect.innerHTML = msel;
+      yearSelect.onchange = updateTable;
+      monthSelect.onchange = updateTable;
+    }
+    energyTypeSelect.onchange = function() {
+      renderLabels(energyTypeSelect.value); updateTable();
+      localStorage.setItem("energyType", energyTypeSelect.value);
+    };
+    (function(){
+      setupYearMonth();
+      if (localStorage.getItem("carTitle")) carNameInput.value = localStorage.getItem("carTitle");
+      if (localStorage.getItem("energyType")) energyTypeSelect.value = localStorage.getItem("energyType");
+      renderLabels(energyTypeSelect.value);
+      updateTable();
+      document.title = carNameInput.value + " 데이터";
+    })();
+    formEl.onsubmit = function(e) {
+      e.preventDefault();
+      const odometer = parseFloat(document.getElementById('odometer').value);
+      const kwh = parseFloat(document.getElementById('kwh').value);
+      const cost = parseFloat(document.getElementById('cost').value);
+      const type = energyTypeSelect.value;
+      const y = parseInt(yearSelect.value), m = parseInt(monthSelect.value);
+      const now = new Date();
+      const day = pad2(now.getDate()), hour = now.getHours(), min = now.getMinutes();
+      const datetime = `${y}-${pad2(m)}-${day} ${pad2(hour)}:${pad2(min)}`;
+      let arr = loadData();
+      let prevOdom = arr.length > 0 ? arr[arr.length-1].odometer : null;
+      let distance = prevOdom!=null ? odometer-prevOdom : odometer;
+      if(distance < 0){alert("누적거리는 앞 기록보다 커야 합니다."); return;}
+      arr.push({ y, m, datetime, odometer, distance, kwh, cost, type });
+      saveData(arr);
+      formEl.reset();
+      updateTable();
+    };
+  </script>
+</body>
+</html>
