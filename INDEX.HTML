@@ -18,7 +18,6 @@
     .flex-title {
       display: flex; align-items: center; gap:7px; flex-wrap:nowrap;
       margin-bottom: 12px; margin-left:12px; justify-content:center;
-      /* 한줄에 정렬! */
     }
     .car-name-dropdown {
       position: relative; display: inline-block;
@@ -181,9 +180,9 @@
 <body>
   <div class="container">
     <div class="flex-title">
-      <!-- 커스텀 드롭다운 닉네임 입력 (8자, 한줄) -->
+      <!-- 닉네임 입력(직접입력+드롭다운 한줄) -->
       <div class="car-name-dropdown">
-        <input id="carNameInput" maxlength="8" value="EV충전비" title="차량 닉네임" readonly/>
+        <input id="carNameInput" maxlength="8" value="EV충전비" title="차량 닉네임" />
         <span class="dropdown-arrow" id="dropdownArrow">▼</span>
         <div class="dropdown-list" id="dropdownList"></div>
       </div>
@@ -220,13 +219,12 @@
     <table class="data-table"><tbody id="dataRows"></tbody></table>
   </div>
   <script>
-    // 커스텀 드롭다운 관리
+    // 닉네임 입력+드롭다운 관리
     const carNameInput = document.getElementById('carNameInput');
     const dropdownArrow = document.getElementById('dropdownArrow');
     const dropdownList = document.getElementById('dropdownList');
     let carNameHistory = JSON.parse(localStorage.getItem("carNameHistory")||'["EV충전비"]');
     let dropdownOpen = false;
-
     function updateDropdownList() {
       dropdownList.innerHTML = carNameHistory.map((name, idx) => 
         `<div class="dropdown-item" data-value="${name}">
@@ -234,7 +232,6 @@
           <button class="delete-nick-btn" data-idx="${idx}" title="삭제">×</button>
         </div>`
       ).join('');
-      
       dropdownList.querySelectorAll('.dropdown-item').forEach(item => {
         item.addEventListener('click', function(e) {
           if (e.target.classList.contains('delete-nick-btn')) {
@@ -246,7 +243,6 @@
         });
       });
     }
-
     function toggleDropdown() {
       dropdownOpen = !dropdownOpen;
       dropdownList.classList.toggle('show', dropdownOpen);
@@ -255,22 +251,13 @@
         updateDropdownList();
       }
     }
-
     function selectNickname(name) {
       carNameInput.value = name;
       dropdownOpen = false;
       dropdownList.classList.remove('show');
       dropdownArrow.classList.remove('open');
-      if (carNameHistory.indexOf(name) === -1) {
-        carNameHistory.unshift(name);
-        if (carNameHistory.length > 15) carNameHistory.pop();
-        localStorage.setItem("carNameHistory", JSON.stringify(carNameHistory));
-      }
-      document.title = `${carNameInput.value} 데이터`;
-      localStorage.setItem("carTitle", carNameInput.value);
-      updateTable();
+      updateNicknameStorage(name);
     }
-
     function deleteNickname(idx) {
       if (carNameHistory.length <= 1) {
         alert('최소 하나의 닉네임은 유지해야 합니다.');
@@ -280,9 +267,23 @@
       localStorage.setItem("carNameHistory", JSON.stringify(carNameHistory));
       updateDropdownList();
     }
-
+    // 입력 시에도 등록 및 자동 저장
+    function updateNicknameStorage(name) {
+      name = name.trim();
+      if (name && carNameHistory.indexOf(name) === -1) {
+        carNameHistory.unshift(name);
+        if (carNameHistory.length > 15) carNameHistory.pop();
+        localStorage.setItem("carNameHistory", JSON.stringify(carNameHistory));
+      }
+      document.title = `${carNameInput.value} 데이터`;
+      localStorage.setItem("carTitle", carNameInput.value);
+      updateTable();
+    }
     dropdownArrow.addEventListener('click', toggleDropdown);
     carNameInput.addEventListener('click', toggleDropdown);
+    // 직접 입력 시 Enter/포커스아웃으로 저장
+    carNameInput.addEventListener('change', () => updateNicknameStorage(carNameInput.value));
+    carNameInput.addEventListener('blur', () => updateNicknameStorage(carNameInput.value));
     document.addEventListener('click', function(e) {
       if (!e.target.closest('.car-name-dropdown')) {
         dropdownOpen = false;
@@ -290,7 +291,6 @@
         dropdownArrow.classList.remove('open');
       }
     });
-
     const energyTypeSelect = document.getElementById('energyTypeSelect');
     const yearSelect = document.getElementById('yearSelect');
     const monthSelect = document.getElementById('monthSelect');
@@ -298,7 +298,6 @@
     const summaryRow = document.getElementById('summaryRow');
     const dataRows = document.getElementById('dataRows');
     const formEl = document.getElementById('form');
-
     function ymKey() {
       return `${yearSelect.value}-${pad2(monthSelect.value)}-${energyTypeSelect.value}-${carNameInput.value}`;
     }
